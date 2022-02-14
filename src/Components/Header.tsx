@@ -83,7 +83,7 @@ const Input = styled(motion.input)`
   position: absolute;
   left: -150px;
   padding: 5px 30px;
-  background: ${(props) => props.theme.black.veryDark};
+  background: transparent;
   border: 1px solid white;
   color: white;
 `;
@@ -110,7 +110,7 @@ const navVariatns = {
 };
 
 function Header() {
-  const [searchOpen, setSearchOpen] = useState(true);
+  const [searchOpen, setSearchOpen] = useState(false);
   const homeMatch = useMatch("/");
   const tvMatch = useMatch("/tv");
   const inputAnimation = useAnimation();
@@ -146,7 +146,7 @@ function Header() {
         <Logo
           variants={logoVariants}
           whileHover='active'
-          initial='normal'
+          animate='normal'
           xmlns='http://www.w3.org/2000/svg'
           width='1024'
           height='276.742'
@@ -187,6 +187,7 @@ function Header() {
           </motion.svg>
           <Input
             animate={inputAnimation}
+            initial={{ scaleX: 0 }}
             transition={{ type: "linear" }}
             // animate={{ scaleX: searchOpen ? 1 : 0 }}
             placeholder='Search for movie or tv show...'
