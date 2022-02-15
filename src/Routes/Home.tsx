@@ -1,3 +1,5 @@
+import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 import { useQuery } from "react-query";
 import styled from "styled-components";
 import { getMoives, IGetMoviesResult } from "../api";
@@ -35,22 +37,150 @@ const Overview = styled.p`
   width: 50%;
 `;
 
+const Slider = styled(motion.div)`
+  position: relative;
+  top: -150px;
+`;
+
+const Row = styled(motion.div)`
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+  position: absolute;
+  width: 100%;
+`;
+
+const Box = styled(motion.div)<{ bgPhoto: string }>`
+  background-color: white;
+  height: 200px;
+  background-image: url(${(props) => props.bgPhoto});
+  background-size: cover;
+  background-position: center center;
+  &:first-child {
+    transform-origin: left center;
+  }
+  &:last-child {
+    transform-origin: center right;
+  }
+`;
+
+const Info = styled(motion.div)`
+  padding: 10px 0px;
+  background-color: ${(props) => props.theme.black.lighter};
+  opacity: 0;
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+  h4 {
+    text-align: center;
+    font-size: 18px;
+  }
+`;
+
+const rowVariants = {
+  hidden: {
+    x: window.outerWidth - 8,
+  },
+  visible: {
+    x: 0,
+  },
+  exit: {
+    x: -window.outerWidth + 8,
+  },
+};
+
+const boxVariants = {
+  normal: {
+    scale: 1,
+  },
+  hover: {
+    zIndex: 99,
+    scale: 1.3,
+    y: -50,
+    transition: {
+      delay: 0.5,
+      type: "tween",
+      duration: 0.3,
+    },
+  },
+};
+
+const infoVariants = {
+  hover: {
+    opacity: 1,
+    transition: {
+      delay: 0.5,
+      type: "tween",
+      duration: 0.3,
+    },
+  },
+};
+
+const offset = 6;
+
 function Home() {
   const { isLoading, data } = useQuery<IGetMoviesResult>(
     ["movies", "nowPlaying"],
     getMoives
   );
 
+  const [index, setIndex] = useState(0);
+  const [leaving, setLeaving] = useState(false);
+  const toggleLeaving = () => setLeaving(!leaving);
+  const increaseIndex = () => {
+    if (data) {
+      if (leaving) return;
+      toggleLeaving();
+      const totalMovies = data.results.length - 1;
+      const maxIndex = Math.floor(totalMovies / offset) - 1;
+      setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
+    }
+  };
   return (
     <Wrapper>
       {isLoading ? (
         <Loader>Loading...</Loader>
       ) : (
         <>
-          <Banner bgPhoto={makeImagePath(data?.results[0].backdrop_path || "")}>
+          <Banner
+            onClick={increaseIndex}
+            bgPhoto={makeImagePath(data?.results[0].backdrop_path || "")}
+          >
             <Title>{data?.results[0].title}</Title>
             <Overview>{data?.results[0].overview}</Overview>
           </Banner>
+          <Slider>
+            {/* onExitComplete에 함수를 넣으면 exit이 끝났을 때 함수가 실행됨 */}
+            {/* AnimatePresence에 initial에false값을 주면 처음 initial이 실행되지 않는다 */}
+            <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
+              <Row
+                variants={rowVariants}
+                initial='hidden'
+                animate='visible'
+                exit='exit'
+                transition={{ type: "tween", duration: 1 }}
+                key={index}
+              >
+                {data?.results
+                  .slice(1, 19)
+                  .slice(offset * index, offset * index + offset)
+                  .map((movie) => (
+                    <Box
+                      variants={boxVariants}
+                      key={movie.id}
+                      initial='normal'
+                      whileHover='hover'
+                      transition={{ type: "tween" }}
+                      bgPhoto={makeImagePath(movie.backdrop_path, "w500")}
+                    >
+                      <Info variants={infoVariants}>
+                        <h4>{movie.title}</h4>
+                      </Info>
+                    </Box>
+                  ))}
+              </Row>
+            </AnimatePresence>
+          </Slider>
         </>
       )}
     </Wrapper>

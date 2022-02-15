@@ -37,6 +37,7 @@ const Globalstyle = createGlobalStyle`
     height: 200vh;
     color: ${(props) => props.theme.white.darker};
     background: black;
+    overflow-x:hidden;
   }
   a {
     text-decoration: none;
